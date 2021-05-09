@@ -1,7 +1,5 @@
 # Canadian national accounts dashboard
-# Started March 31, 2021; updated May 5, 2021
-
-#setwd("/Users/philipsmith/Documents/R/NatAcctsBrowserV7/")
+# Started March 31, 2021; updated May 9, 2021
 
 library(shiny)
 library(tidyverse)
@@ -13,44 +11,24 @@ source("Tabl_specs.R")
 source("Make_tabl.R")
 source("Make_chrt.R")
 
-firstdate <- "2019-10-01"
-lastdate <- "2020-10-01"
-strtrang <- c("2019 Q2","2020 Q4")
-numqtrs <- 240
-
-tbl <- c(TS[[1]]$Titl, TS[[2]]$Titl, TS[[3]]$Titl, TS[[4]]$Titl,
-         TS[[9]]$Titl, TS[[10]]$Titl,TS[[11]]$Titl,TS[[5]]$Titl, 
-         TS[[31]]$Titl,TS[[18]]$Titl,TS[[20]]$Titl,TS[[19]]$Titl,
-         TS[[7]]$Titl, TS[[8]]$Titl, TS[[13]]$Titl,TS[[14]]$Titl,
-         TS[[41]]$Titl,TS[[32]]$Titl,TS[[6]]$Titl, TS[[33]]$Titl,
-         TS[[34]]$Titl,TS[[35]]$Titl,TS[[36]]$Titl,TS[[38]]$Titl,
-         TS[[39]]$Titl,TS[[40]]$Titl,TS[[37]]$Titl,TS[[15]]$Titl,
-         TS[[16]]$Titl,TS[[17]]$Titl,TS[[12]]$Titl,TS[[42]]$Titl,
-         TS[[43]]$Titl,TS[[44]]$Titl,TS[[45]]$Titl,TS[[21]]$Titl,
-         TS[[22]]$Titl,TS[[23]]$Titl,TS[[24]]$Titl,TS[[25]]$Titl,
-         TS[[26]]$Titl,TS[[27]]$Titl,TS[[28]]$Titl,TS[[29]]$Titl,
-         TS[[30]]$Titl)
-tabn <- c(TS[[1]]$Num,TS[[2]]$Num, TS[[3]]$Num, TS[[4]]$Num,
-         TS[[9]]$Num, TS[[10]]$Num,TS[[11]]$Num,TS[[5]]$Num, 
-         TS[[31]]$Num,TS[[18]]$Num,TS[[20]]$Num,TS[[19]]$Num,
-         TS[[7]]$Num, TS[[8]]$Num, TS[[13]]$Num,TS[[14]]$Num,
-         TS[[41]]$Num,TS[[32]]$Num,TS[[6]]$Num, TS[[33]]$Num,
-         TS[[34]]$Num,TS[[35]]$Num,TS[[36]]$Num,TS[[38]]$Num,
-         TS[[39]]$Num,TS[[40]]$Num,TS[[37]]$Num,TS[[15]]$Num,
-         TS[[16]]$Num,TS[[17]]$Num,TS[[12]]$Num,TS[[42]]$Num,
-         TS[[43]]$Num,TS[[44]]$Num,TS[[45]]$Num,TS[[21]]$Num,
-         TS[[22]]$Num,TS[[23]]$Num,TS[[24]]$Num,TS[[25]]$Num,
-         TS[[26]]$Num,TS[[27]]$Num,TS[[28]]$Num,TS[[29]]$Num,
-         TS[[30]]$Num)
-tn <- setNames(tabn,tbl)
-trf1 <- c(
+tord <- c(1,2,3,4,9,10,11,5,31,18,20,19,7,8,13,14,41,32,6,33,
+  34,35,36,38,39,40,37,15,16,17,12,42,43,44,45,21,22,23,24,25,26,
+  27,28,29,30,46,47,48) # the order of the tables
+tbl <- character()
+tabn <- numeric()
+for (i in 1:length(tord)) {
+  tbl[i] <- TS[[tord[i]]]$Titl # a vector of table names
+  tabn[i] <- TS[[tord[i]]]$Num # a vector of table numbers
+}
+tn <- setNames(tabn,tbl) # a vector of named table numbers
+trf1 <- c( # transformation options for a table
   "Original table",
   "Index, starting quarter = 100",
   "One-quarter % change",
   "Four-quarter % change",
   "Percentage of GDP"
 )
-trf2 <-  c(
+trf2 <-  c( # transformation options for a chart
   "Original series",
   "Index, starting quarter = 100",
   "One-quarter % change",
@@ -58,15 +36,26 @@ trf2 <-  c(
   "Percentage of GDP",
   "Include a trend line"
 )
-
-qtrsD <- seq.Date(as.Date("1961-01-01"),as.Date(lastdate),by="quarter")
-qtrs61 <- character()
-for (i in 1:numqtrs) {
-  qtrs61[i] <- paste0(year(qtrsD[i])," Q",quarter(qtrsD[i]))
+# Starting conditions for initial table and chart
+# First the full sequence of dates in "Date" format
+qtrsD <- seq.Date(TS[[1]]$Strt,TS[[1]]$Endt,by="quarter")
+# Now the corresponding sequence of dates in "character" format
+qtrsSrt <- character()
+for (i in 1:length(qtrsD)) {
+  qtrsSrt[i] <- paste0(year(qtrsD[i])," Q",quarter(qtrsD[i]))
 }
-qtrs81 <- qtrs61[81:length(qtrs61)]
-qtrs97 <- qtrs61[145:length(qtrs61)]
-qtrs15 <- qtrs61[217:length(qtrs61)]
+# Now the starting range for a table - the last six quarters
+strtrangT <- c(qtrsSrt[length(qtrsSrt)-5],qtrsSrt[length(qtrsSrt)])
+# Now the starting range for a chart - all available quarters
+strtrangC <- c(qtrsSrt[1],qtrsSrt[length(qtrsSrt)])
+
+ShowChrt <- function(x) { # Function to display a row of three charts
+  fluidRow(
+    column(4,plotOutput(paste0("chart",x))),
+    column(4,plotOutput(paste0("chart",x+1))),
+    column(4,plotOutput(paste0("chart",x+2))),
+  )
+}
 
 ui <- navbarPage(title = tags$b(tags$span(style="color:red", "National accounts")),
   windowTitle = "Canadian national accounts browser",
@@ -81,38 +70,49 @@ ui <- navbarPage(title = tags$b(tags$span(style="color:red", "National accounts"
     value = "tabPanel01",
     htmlOutput("textInfo")
   ),
+  tabPanel(tags$b(tags$span(style="color:blue","List of tables")),
+    value = "tabPanel02",
+    htmlOutput("tblsInfo")
+  ),
   tabPanel(tags$b(tags$span(style="color:blue", "Tables")),
     tags$style(type='text/css', ".selectize-input { 
       font-size: 24px; line-height: 24px;} .selectize-dropdown 
       { font-size: 20px; line-height: 20px; }"),
     selectInput("tabl1", tags$b(tags$span(style="color:blue", 
       "Choose a table:")),choices = tn,width = "100%"),
-    prettyRadioButtons("transf1", tags$b(tags$span(style="color:blue", 
-      "Choose a transformation:")),choices=trf1,bigger=TRUE,
-      outline=TRUE,inline=TRUE,shape="round",animation="pulse"),
+    fluidRow(
+      column(10,prettyRadioButtons("transf1", tags$b(tags$span(style="color:blue", 
+        "Choose a transformation:")),choices=trf1,bigger=TRUE,
+        outline=TRUE,inline=TRUE,shape="round",animation="pulse")),
+      column(2,downloadButton("downloadData1",label="Download table"))
+    ),
     chooseSliderSkin(skin="Round",color="blue"),
     sliderTextInput("Dates",tags$b(tags$span(style="color:blue", 
       "Choose starting and ending dates:")),
-      choices=qtrs61,
-      selected=strtrang,
+      choices=qtrsSrt,
+      selected=strtrangT,
       dragRange = TRUE,
       width="100%"),
     htmlOutput("notabl"),
     gt_output("tabl")
+    
   ),
   tabPanel(tags$b(tags$span(style="color:blue", "Charts")),
     selectInput("tabl2", tags$b(tags$span(style="color:blue", 
       "Choose a table:")),choices = tn,width = "100%"),
     selectInput("chrt", tags$b(tags$span(style="color:blue", 
       "Choose a time series to chart:")),choices = ser_01,width = "100%"),
-    prettyRadioButtons("transf2", tags$b(tags$span(style="color:blue", 
-      "Choose a transformation:")),choices=trf2,bigger=TRUE,outline=TRUE,
-      inline=TRUE,shape="round",animation="pulse"),      
+    fluidRow(
+      column(10,prettyRadioButtons("transf2", tags$b(tags$span(style="color:blue", 
+        "Choose a transformation:")),choices=trf2,bigger=TRUE,
+        outline=TRUE,inline=TRUE,shape="round",animation="pulse")),
+      column(2,downloadButton("downloadData2",label="Download chart"))
+    ),
     chooseSliderSkin(skin="Round",color="blue"),
     sliderTextInput("ChrtDats",tags$b(tags$span(style="color:blue", 
       "Choose starting and ending dates:")),
-      choices=qtrs61,
-      selected=strtrang,
+      choices=qtrsSrt,
+      selected=strtrangC,
       dragRange = TRUE,
       width="100%"),
     htmlOutput("nochart"),
@@ -120,56 +120,14 @@ ui <- navbarPage(title = tags$b(tags$span(style="color:red", "National accounts"
   ),
   tabPanel(tags$b(tags$span(style="color:blue", "Selections 1")),
     fluidPage(
-      fluidRow(
-        column(4,plotOutput("chart01")),
-        column(4,plotOutput("chart02")),
-        column(4,plotOutput("chart03"))
-      ),
-      HTML("<br>"),
-      fluidRow(
-        column(4,plotOutput("chart04")),
-        column(4,plotOutput("chart05")),
-        column(4,plotOutput("chart06"))
-      ),
-      HTML("<br>"),
-      fluidRow(
-        column(4,plotOutput("chart07")),
-        column(4,plotOutput("chart08")),
-        column(4,plotOutput("chart09"))
-      ),
-      HTML("<br>"),
-      fluidRow(
-        column(4,plotOutput("chart10")),
-        column(4,plotOutput("chart11")),
-        column(4,plotOutput("chart12"))
-      )
+      ShowChrt(1),HTML("<br>"),ShowChrt(4),HTML("<br>"),
+      ShowChrt(7),HTML("<br>"),ShowChrt(10),HTML("<br>")
     )
   ),
   tabPanel(tags$b(tags$span(style="color:blue", "Selections 2")),
     fluidPage(
-      fluidRow(
-        column(4,plotOutput("chart13")),
-        column(4,plotOutput("chart14")),
-        column(4,plotOutput("chart15"))
-      ),
-      HTML("<br>"),
-      fluidRow(
-        column(4,plotOutput("chart16")),
-        column(4,plotOutput("chart17")),
-        column(4,plotOutput("chart18"))
-      ),
-      HTML("<br>"),
-      fluidRow(
-        column(4,plotOutput("chart19")),
-        column(4,plotOutput("chart20")),
-        column(4,plotOutput("chart21"))
-      ),
-      HTML("<br>"),
-      fluidRow(
-        column(4,plotOutput("chart22")),
-        column(4,plotOutput("chart23")),
-        column(4,plotOutput("chart24"))
-      )
+      ShowChrt(13),HTML("<br>"),ShowChrt(16),HTML("<br>"),
+      ShowChrt(19),HTML("<br>"),ShowChrt(22),HTML("<br>")
     )
   )
 )
@@ -177,6 +135,8 @@ ui <- navbarPage(title = tags$b(tags$span(style="color:red", "National accounts"
 server <- function(input, output,session) {
   info <- "Info.html"
   output$textInfo <- renderUI(includeHTML(info))
+  tbls <- "Tables_list.html"
+  output$tblsInfo <- renderUI(includeHTML(tbls))
   tab1 <- reactive(as.numeric(input$tabl1))
   type1 <- reactive(case_when(
     input$transf1=="Original table"~1,
@@ -194,7 +154,7 @@ server <- function(input, output,session) {
       (1+3*(as.numeric(substr(input$Dates[2],7,7))-1)),"-01"))
   })
   output$notabl <- renderUI({
-    if ((TS[[tab1()]]$Idx & type1()==5) | (tab1()==31 & type1()!=1))
+    if (TS[[tab1()]]$Idx & type1()==5)
       sendSweetAlert(session,
         title="Transformation not relevant here",
         text=paste0("This transformation is not relevant in this context, ",
@@ -207,24 +167,31 @@ server <- function(input, output,session) {
         width = NULL
         )
   })
+  expr <- reactive({Make_tabl(tab1(),type1(),qtr1(),qtr2())})
   output$tabl <- render_gt({
-    if (!(TS[[tab1()]]$Idx & type1()==5) & !(tab1()==31 & type1()!=1))
-      expr=Make_tabl(tab1(),type1(),qtr1(),qtr2())
+    if (!(TS[[tab1()]]$Idx & type1()==5))
+      expr()[[1]]
   })
-  observe({
-    if (TS[[tab1()]]$Strt==as.Date("1981-01-01")) {
-      picks <- qtrs81
-    } else if (TS[[tab1()]]$Strt==as.Date("1997-01-01")) {
-      picks <- qtrs97
-    } else if (TS[[tab1()]]$Strt==as.Date("2015-01-01")) {
-      picks <- qtrs15
-    } else {
-      picks <- qtrs61
+  output$downloadData1 <- downloadHandler(
+    filename=function() {
+      paste0(TS[[tab1()]]$STCno,".csv")
+    },
+    content=function(file) {
+      write.csv(expr()[[2]],file)
     }
+  )
+  observe({
+    qtrsRange <- seq.Date(TS[[tab1()]]$Strt,TS[[tab1()]]$Endt,by="quarter")
+    qtrs <- character()
+    for (i in 1:length(qtrsRange)) {
+      qtrs[i] <- paste0(year(qtrsRange[i])," Q",quarter(qtrsRange[i]))
+    }    
+    picks <- qtrs
+    strtrang1 <- c(qtrs[length(qtrs)-5],qtrs[length(qtrs)])
     updateSliderTextInput(session,"Dates",tags$b(tags$span(style="color:blue", 
       "Choose starting and ending dates:")),
       choices = picks,
-      selected=strtrang)
+      selected=strtrang1)
   })
   
 ######### Charts starts here #########
@@ -255,7 +222,7 @@ server <- function(input, output,session) {
   MYtitl <- reactive({input$chrt})
 
   output$nochart <- renderUI({
-    if ((TS[[tab2()]]$Idx & type2()==5) | (tab2()==31 & type2()!=1))
+    if (TS[[tab2()]]$Idx & type2()==5)
       sendSweetAlert(session,
         title="Transformation not relevant here",
         text=paste0("This transformation is not relevant in this context, ",
@@ -268,52 +235,57 @@ server <- function(input, output,session) {
         width = NULL
         )
   })
-  output$chart <- renderPlot({
-    if (!(TS[[tab2()]]$Idx & type2()==5) & !(tab2()==31 & type2()!=1))
-      Make_chrt(tab2(),type2(),qtr1c(),qtr2c(),MYtitl(),"","year")},height=700)   
-  observe({
-    if (TS[[tab2()]]$Strt==as.Date("1981-01-01")) {
-      picks <- qtrs81
-    } else if (TS[[tab2()]]$Strt==as.Date("1997-01-01")) {
-      picks <- qtrs97
-    } else if (TS[[tab2()]]$Strt==as.Date("2015-01-01")) {
-      picks <- qtrs15
-    } else {
-      picks <- qtrs61
+  chart1 <- reactive({if (!(TS[[tab2()]]$Idx & type2()==5))
+      Make_chrt(tab2(),type2(),qtr1c(),qtr2c(),MYtitl(),"","year")})   
+  output$chart <- renderPlot({chart1()},height=700)
+  output$downloadData2 <- downloadHandler(
+    filename=function() {
+      paste0(TS[[tab2()]]$STCno,".png")
+    },
+    content=function(file) {
+      ggsave(file,chart1(),height=8,width=16,dpi=300)
     }
+  )
+  observe({
+    qtrsRange <- seq.Date(TS[[tab2()]]$Strt,TS[[tab2()]]$Endt,by="quarter")
+    qtrs <- character()
+    for (i in 1:length(qtrsRange)) {
+      qtrs[i] <- paste0(year(qtrsRange[i])," Q",quarter(qtrsRange[i]))
+    }    
+    picks <- qtrs
+    strtrang1 <- c(qtrs[1],qtrs[length(qtrs)])
     updateSliderTextInput(session,"ChrtDats",tags$b(tags$span(style="color:blue", 
       "Choose starting and ending dates:")),
       choices = picks,
-      selected=strtrang)
+      selected=strtrang1)
   })
-  #tab3 <- reactive(as.numeric(input$Page))
-  output$chart01 <- renderPlot(
+  output$chart1 <- renderPlot(
     {Make_chrt(1,1,as.Date("1961-01-01"),as.Date("2020-10-01"),
       "Net operating surplus: corporations","","5 years")})
-  output$chart02 <- renderPlot(
+  output$chart2 <- renderPlot(
     {Make_chrt(2,3,as.Date("2010-01-01"),as.Date("2020-10-01"),
       "Household final consumption expenditure","","year")})
-  output$chart03 <- renderPlot(
+  output$chart3 <- renderPlot(
     {Make_chrt(9,4,as.Date("2008-01-01"),as.Date("2020-10-01"),
       "All industries [T001]","Real gross domestic product","year")})
-  output$chart04 <- renderPlot(
+  output$chart4 <- renderPlot(
     {Make_chrt(21,6,as.Date("2015-01-01"),as.Date("2020-10-01"),
       "Canada's net international investment position","","year")})
-  output$chart05 <- renderPlot(
+  output$chart5 <- renderPlot(
     {Make_chrt(13,1,as.Date("1961-01-01"),as.Date("2020-10-01"),
       "Business gross fixed capital formation: residential structures",
       "Business residential construction investment","5 years")})
-  output$chart06 <- renderPlot(
+  output$chart6 <- renderPlot(
     {Make_chrt(22,4,as.Date("1997-01-01"),as.Date("2020-10-01"),
       "Labour productivity","","year")})
-  output$chart07 <- renderPlot(
+  output$chart7 <- renderPlot(
     {Make_chrt(20,6,as.Date("1981-01-01"),as.Date("2020-10-01"),
       "Dividends","Household dividend income","5 years")})
-  output$chart08 <- renderPlot(
+  output$chart8 <- renderPlot(
     {Make_chrt(7,1,as.Date("2018-10-01"),as.Date("2020-10-01"),
       "Cannabis products for non-medical use (licensed)",
       "Household expenditure on licensed cannabis","year")})
-  output$chart09 <- renderPlot(
+  output$chart9 <- renderPlot(
     {Make_chrt(11,3,as.Date("2010-01-01"),as.Date("2020-10-01"),
       "Accommodation and food services [72]",
       "Real GDP, accommodation and food services","year")})

@@ -1,5 +1,5 @@
 # Make_tabl() function
-# May 1, 2021
+# May 8, 2021
 
 #===============================================================================
 # Make_tabl - function to generate a gt() table
@@ -19,6 +19,7 @@ library(lubridate)
 source("Tabl_specs.R")
 
 GDPdf <- readRDS("rds/GDPdf.rds") # GDP is used in most tables
+GDPHdf <- readRDS("rds/GDPHdf.rds") # GDPH is used in historical tables
 
 #===============================================================================
 # Make_tabl - function to create q0 data frame and inputs to Table() function
@@ -28,9 +29,11 @@ GDPdf <- readRDS("rds/GDPdf.rds") # GDP is used in most tables
 # qtr2 - last quarter for table
 #===============================================================================
 Make_tabl <- function(tabno,type,qtr1,qtr2) {
-  #print(paste0("class of tabno = ",class(tabno)))
-  #print(paste0("tabno= ",tabno," type= ",type," Strt= ",TS[[tabno]]$Strt))
-  GDP <- filter(GDPdf,REF_DATE>=TS[[tabno]]$Strt)$VALUE/TS[[tabno]]$RateFctr
+  if (TS[[tabno]]$TblType=="Current") {
+    GDP <- filter(GDPdf,REF_DATE>=TS[[tabno]]$Strt)$VALUE/TS[[tabno]]$RateFctr
+  } else {
+    GDP <- filter(GDPHdf,REF_DATE>=TS[[tabno]]$Strt)$VALUE/TS[[tabno]]$RateFctr
+  }    
   q0 <- readRDS(paste0("rds/",TS[[tabno]]$STCno,".rds"))
   colnam1 <- seq.Date(qtr1,qtr2,by="quarter")
   colnam2 <- vector()
@@ -90,9 +93,6 @@ Make_tabl <- function(tabno,type,qtr1,qtr2) {
           "Seasonally adjusted at annual rates<br><br>")
   decs <- TS[[tabno]]$DecPlac
   if (type==2 | type==3 | type==4 | type==5) decs <- 1
-  #if ((TS[[tabno]]$DecPlac==1 & type==1) | type==2 | 
-  #    type==3 | type==4 | type==5) {
-  #  decs <- 1 } else { decs <- 0 }
   if(type==1) { # Display original data
     q1 <- q0
   } else if (type==2) { # Display indexed data
@@ -170,7 +170,8 @@ Make_tabl <- function(tabno,type,qtr1,qtr2) {
       columns=c(2:(ncols+1)),
       decimals=decs,
       use_seps=TRUE)
-  tbl <- gt_tbl
+  #tbl <- gt_tbl
+  tbl <- list(gt_tbl,tbl_df)
 }
 
 #z <- Make_tabl(12,1,as.Date("2019-10-01"),as.Date("2020-10-01"))

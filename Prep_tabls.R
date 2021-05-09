@@ -1,10 +1,10 @@
 # Code to set up the table data frames and save them as rds files
-# May 2, 2021
+# May 7, 2021
 
 pkgs <- c("cansim","tidyverse","stringr","gt","rlist")
 inst <- lapply(pkgs,library,character.only=TRUE)
 
-savespot <- "/Users/philipsmith/Documents/R/NatAcctsBrowserV6/"
+savespot <- "/Users/philipsmith/Documents/R/NatAcctsBrowserV9/"
 
 GDPdf <- get_cansim_vector("v62295562","1961-01-01")
 GDPdf$REF_DATE <- as.Date(paste0(GDPdf$REF_DATE,"-01"))
@@ -12,6 +12,10 @@ saveRDS(GDPdf,paste0(savespot,"rds/GDPdf.rds"))
 GDPNSAdf <- get_cansim_vector("v62295576","1961-01-01")
 GDPNSAdf$REF_DATE <- as.Date(paste0(GDPNSAdf$REF_DATE,"-01"))
 saveRDS(GDPNSAdf,paste0(savespot,"rds/GDPNSAdf.rds"))
+# Historical GDP: 1947 Q1 to 1997 Q2
+GDPHdf <- get_cansim_vector("v87224076","1947-01-01")
+GDPHdf$REF_DATE <- as.Date(paste0(GDPHdf$REF_DATE,"-01"))
+saveRDS(GDPHdf,paste0(savespot,"rds/GDPHdf.rds"))
 
 file_refresh <- TRUE
 
@@ -819,6 +823,37 @@ q0 <- mutate(q0,dots=str_count(q0$HIER,"\\."))
 q0 <- filter(q0,dots<=2)
 q0 <- select(q0,-HIER,-dots)
 q0 <- pivot_wider(q0,names_from=NAPCS,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(46)===========================================================================
+table01_id <- "36-10-0136-01" # Income-based GDP 47-97 archived
+table01 <- get_cansim(table01_id,refresh=file_refresh)
+q0 <- filter(table01,
+  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
+q0 <- select(q0,REF_DATE,`Income-based estimates`,VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=`Income-based estimates`,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(47)===========================================================================
+table01_id <- "36-10-0137-01" # Expenditure-based GDP 47-97 archived
+table01 <- get_cansim(table01_id,refresh=file_refresh)
+q0 <- filter(table01,Prices=="Current prices",
+  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
+q0 <- select(q0,REF_DATE,`Expenditure-based estimates`,VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=`Expenditure-based estimates`,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(48)===========================================================================
+table01_id <- "36-10-0137-01" # Expenditure-based GDP 47-97 archived $86
+table01 <- get_cansim(table01_id,refresh=file_refresh)
+table01_id <- "36-10-0137-02" # Expenditure-based GDP 47-97 archived $86
+q0 <- filter(table01,Prices=="1986 constant prices",
+  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
+q0 <- select(q0,REF_DATE,`Expenditure-based estimates`,VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=`Expenditure-based estimates`,values_from=VALUE)
 saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
 
 
