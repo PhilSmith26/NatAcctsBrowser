@@ -86,6 +86,9 @@ Make_tabl <- function(tabno,type,qtr1,qtr2) {
         type==4 ~ paste0("Four-quarter percentage change<br>",
           TS[[tabno]]$Seas,"<br><br>"),
         type==5 ~ paste0("Percentage of gross domestic product<br>",
+          TS[[tabno]]$Seas,"<br><br>"),
+        type==6 ~ paste0(TS[[tabno]]$Units,
+          ", five-quarter centred moving average<br>",
           TS[[tabno]]$Seas,"<br><br>")
   )
   if (TS[[tabno]]$RateFctr==1 & type==1)
@@ -108,6 +111,18 @@ Make_tabl <- function(tabno,type,qtr1,qtr2) {
   } else if(type==5) { # Display % of GDP
     q1 <- mutate(q0,across(2:ncol(q0),function(x) 
       {y <- round(100*(x/GDP),1)}))
+  } else if(type==6) { # Display 5-qtr centred moving average
+    q1 <- mutate(q0,across(2:ncol(q0),function(x) 
+      {
+        y <- round((lag(x,2)+lag(x,1)+x+lead(x,1)+lead(x,2))/5,1)
+        n <- length(x)
+        y[1] <- x[1]; 
+        y[2] <- (x[1]+x[2]+x[3])/3
+        y[n] <- x[n]
+        y[n-1] <- (x[n-2]+x[n-1]+x[n])/3
+        return(y)
+      }
+    ))
   }
   # Transpose the data frame and make it ready for the gt() function
   tbl_df <- filter(q1,REF_DATE>=qtr1 & REF_DATE<=qtr2)

@@ -26,15 +26,17 @@ trf1 <- c( # transformation options for a table
   "Index, starting quarter = 100",
   "One-quarter % change",
   "Four-quarter % change",
-  "Percentage of GDP"
+  "Percentage of GDP",
+  "Five-quarter centred moving average"
 )
 trf2 <-  c( # transformation options for a chart
   "Original series",
+  "Include a trend line",
   "Index, starting quarter = 100",
   "One-quarter % change",
   "Four-quarter % change",
   "Percentage of GDP",
-  "Include a trend line"
+  "Five-quarter centred moving average"
 )
 # Starting conditions for initial table and chart
 # First the full sequence of dates in "Date" format
@@ -79,7 +81,7 @@ ui <- navbarPage(title = tags$b(tags$span(style="color:red", "National accounts"
       font-size: 24px; line-height: 24px;} .selectize-dropdown 
       { font-size: 20px; line-height: 20px; }"),
     selectInput("tabl1", tags$b(tags$span(style="color:blue", 
-      "Choose a table:")),choices = tn,width = "100%"),
+      "Choose a table:")),choices = tn,selectize=FALSE,width = "100%"),
     fluidRow(
       column(10,prettyRadioButtons("transf1", tags$b(tags$span(style="color:blue", 
         "Choose a transformation:")),choices=trf1,bigger=TRUE,
@@ -87,8 +89,8 @@ ui <- navbarPage(title = tags$b(tags$span(style="color:red", "National accounts"
       column(2,downloadButton("downloadData1",label="Download table"))
     ),
     chooseSliderSkin(skin="Round",color="blue"),
-    sliderTextInput("Dates",tags$b(tags$span(style="color:blue", 
-      "Choose starting and ending dates:")),
+    sliderTextInput(inputId="Dates",label= #tags$b(tags$span(style="color:blue", 
+      "Choose starting and ending dates:",#)),
       choices=qtrsSrt,
       selected=strtrangT,
       dragRange = TRUE,
@@ -101,7 +103,7 @@ ui <- navbarPage(title = tags$b(tags$span(style="color:red", "National accounts"
     selectInput("tabl2", tags$b(tags$span(style="color:blue", 
       "Choose a table:")),choices = tn,width = "100%"),
     selectInput("chrt", tags$b(tags$span(style="color:blue", 
-      "Choose a time series to chart:")),choices = ser_01,width = "100%"),
+      "Choose a time series to chart:")),choices = ser_01,selectize=FALSE,width = "100%"),
     fluidRow(
       column(10,prettyRadioButtons("transf2", tags$b(tags$span(style="color:blue", 
         "Choose a transformation:")),choices=trf2,bigger=TRUE,
@@ -109,8 +111,8 @@ ui <- navbarPage(title = tags$b(tags$span(style="color:red", "National accounts"
       column(2,downloadButton("downloadData2",label="Download chart"))
     ),
     chooseSliderSkin(skin="Round",color="blue"),
-    sliderTextInput("ChrtDats",tags$b(tags$span(style="color:blue", 
-      "Choose starting and ending dates:")),
+    sliderTextInput("ChrtDats",label= #tags$b(tags$span(style="color:blue", 
+      "Choose starting and ending dates:",#)),
       choices=qtrsSrt,
       selected=strtrangC,
       dragRange = TRUE,
@@ -143,7 +145,8 @@ server <- function(input, output,session) {
     input$transf1=="Index, starting quarter = 100"~2,
     input$transf1=="One-quarter % change"~3,
     input$transf1=="Four-quarter % change"~4,
-    input$transf1=="Percentage of GDP"~5
+    input$transf1=="Percentage of GDP"~5,
+    input$transf1=="Five-quarter centred moving average"~6
   ))
   qtr1 <- reactive({
     as.Date(paste0(substr(input$Dates[1],1,4),"-",
@@ -188,8 +191,8 @@ server <- function(input, output,session) {
     }    
     picks <- qtrs
     strtrang1 <- c(qtrs[length(qtrs)-5],qtrs[length(qtrs)])
-    updateSliderTextInput(session,"Dates",tags$b(tags$span(style="color:blue", 
-      "Choose starting and ending dates:")),
+    updateSliderTextInput(session,inputId="Dates",tags$b(tags$span(style="color:blue", 
+      label="Choose starting and ending dates:")),
       choices = picks,
       selected=strtrang1)
   })
@@ -198,11 +201,12 @@ server <- function(input, output,session) {
   tab2 <- reactive(as.numeric(input$tabl2))
   type2 <- reactive(case_when(
     input$transf2=="Original series"~1,
-    input$transf2=="Index, starting quarter = 100"~2,
-    input$transf2=="One-quarter % change"~3,
-    input$transf2=="Four-quarter % change"~4,
-    input$transf2=="Percentage of GDP"~5,
-    input$transf2=="Include a trend line"~6
+    input$transf2=="Include a trend line"~2,
+    input$transf2=="Index, starting quarter = 100"~3,
+    input$transf2=="One-quarter % change"~4,
+    input$transf2=="Four-quarter % change"~5,
+    input$transf2=="Percentage of GDP"~6,
+    input$transf2=="Five-quarter centred moving average"~7
   ))
  
   Nchoices <- reactive({TS[[tab2()]]$Nchoices})
@@ -222,7 +226,7 @@ server <- function(input, output,session) {
   MYtitl <- reactive({input$chrt})
 
   output$nochart <- renderUI({
-    if (TS[[tab2()]]$Idx & type2()==5)
+    if (TS[[tab2()]]$Idx & type2()==6)
       sendSweetAlert(session,
         title="Transformation not relevant here",
         text=paste0("This transformation is not relevant in this context, ",
@@ -235,7 +239,7 @@ server <- function(input, output,session) {
         width = NULL
         )
   })
-  chart1 <- reactive({if (!(TS[[tab2()]]$Idx & type2()==5))
+  chart1 <- reactive({if (!(TS[[tab2()]]$Idx & type2()==6))
       Make_chrt(tab2(),type2(),qtr1c(),qtr2c(),MYtitl(),"","year")})   
   output$chart <- renderPlot({chart1()},height=700)
   output$downloadData2 <- downloadHandler(

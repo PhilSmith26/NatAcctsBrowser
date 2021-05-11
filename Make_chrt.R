@@ -10,13 +10,16 @@ IDX <- function(x) {y <- round(100*x/x[1],1)}
 PC <- function(x) {y <- round(100*(x/lag(x)-1),1)}
 PC4 <- function(x) {y <- round(100*(x/lag(x,4)-1),1)}
 Dgdp <- function(x) {y <- round(100*x/GDP,1)}
+MA5 <- function(x) {
+  y <- round((lag(x,2)+lag(x,1)+x+lead(x,1)+lead(x,2))/5,1)
+  n <- length(x)
+  y[1] <- x[1]; 
+  y[2] <- (x[1]+x[2]+x[3])/3
+  y[n] <- x[n]
+  y[n-1] <- (x[n-2]+x[n-1]+x[n])/3
+  return(y)
+}
 posNeg <- function(x) {sum(x>0,na.rm=TRUE)>0 & sum(x>0,na.rm=TRUE)<length(x)}
-
-#notNA <- function(x,qtr1) {
-#  i <- 0
-#  while(is.na(x[i+1]) & i+1<length(x)) { i <- i+1 }
-#  qtr1n <- add_quarters(qtr1,i)
-#}
 
 # Standard theme for charts
 theme_DB <- function(base_size = 11,
@@ -48,6 +51,17 @@ Make_chrt <- function(tabno,type,qtr1,qtr2,MYtitl,altTitl,interv) {
     GDP <- filter(GDPHdf,REF_DATE>=TS[[tabno]]$Strt)$VALUE/TS[[tabno]]$RateFctr
   }    
   q0 <- readRDS(paste0("rds/",TS[[tabno]]$STCno,".rds"))
+  
+  # Check for NA's at start of this series
+  # and change start date if necessary
+  tmp1 <- mutate(q0,val=.data[[MYtitl]])
+  tmp1 <- filter(tmp1,REF_DATE>=qtr1 & REF_DATE<=qtr2)
+  n <- nrow(tmp1)
+  i <- 1
+  while (is.na(tmp1$val[i]) & i<n) {i <- i+1}
+  if (i>1) {i <- i-1}
+  qtr1 <- tmp1$REF_DATE[i]
+  
   if (altTitl=="") {ChrtTitl <- MYtitl}
     else {ChrtTitl <- altTitl}
   Fqtr <- paste0(year(qtr1)," Q",quarter(qtr1))
@@ -67,12 +81,23 @@ Make_chrt <- function(tabno,type,qtr1,qtr2,MYtitl,altTitl,interv) {
         linetype="dashed")
     }
   } else if (type==2) {
+    MYsubtitl=paste0("Including trend line\n",Fqtr," to ",
+      Lqtr,", ",TS[[tabno]]$Seas)
+    q1 <- mutate(q0,val=.data[[MYtitl]])
+    q1 <- filter(q1,REF_DATE>=qtr1 & REF_DATE<=qtr2)
+    c1 <- ggplot(q1,
+      aes(x=REF_DATE,y=val))+
+      geom_line(colour="black",size=1.5)+
+      geom_smooth(method="lm",se=FALSE,linetype="dashed")+
+      scale_y_continuous(labels=scales::"comma")+
+      labs(title=ChrtTitl,subtitle=paste0(MYsubtitl),caption="",x="",y="")
+    if(posNeg(q1$val)) {
+      c1 <- c1+ geom_hline(yintercept=0,size=0.4,colour="black",
+        linetype="dashed")
+    }
+  } else if (type==3) {
     MYsubtitl=paste0("Index, starting quarter = 100\n",Fqtr," to ",
       Lqtr,", ",TS[[tabno]]$Seas)
-    # Check for and deal with NAs
-    #j <- 0
-    #for (i in 1:nrow(q0)) { if (is.na(q0[[MYtitl]][i])) j <- j+1 }
-    #if (j>0) { q0 <- q0[(j+1):nrow(q0),] }
     q1 <- filter(q0,REF_DATE>=qtr1 & REF_DATE<=qtr2)
     q1 <- mutate(q1,val=IDX(.data[[MYtitl]]))
     c1 <- ggplot(q1,
@@ -84,7 +109,7 @@ Make_chrt <- function(tabno,type,qtr1,qtr2,MYtitl,altTitl,interv) {
       c1 <- c1+ geom_hline(yintercept=0,size=0.4,colour="black",
         linetype="dashed")
     }
-  } else if (type==3) {
+  } else if (type==4) {
     MYsubtitl=paste0("One-quarter percentage change\n",Fqtr," to ",
       Lqtr,", ",TS[[tabno]]$Seas)
     q1 <- mutate(q0,val=PC(.data[[MYtitl]])/100)
@@ -98,7 +123,7 @@ Make_chrt <- function(tabno,type,qtr1,qtr2,MYtitl,altTitl,interv) {
       c1 <- c1+ geom_hline(yintercept=0,size=0.4,colour="black",
         linetype="dashed")
     }
- } else if (type==4) {
+ } else if (type==5) {
     MYsubtitl=paste0("Four-quarter percentage change\n",Fqtr," to ",
       Lqtr,", ",TS[[tabno]]$Seas)
     q1 <- mutate(q0,val=PC4(.data[[MYtitl]])/100)
@@ -112,7 +137,7 @@ Make_chrt <- function(tabno,type,qtr1,qtr2,MYtitl,altTitl,interv) {
       c1 <- c1+ geom_hline(yintercept=0,size=0.4,colour="black",
         linetype="dashed")
     }
-  } else if (type==5) {
+  } else if (type==6) {
     MYsubtitl=paste0("Percentage of GDP\n",Fqtr," to ",
       Lqtr,", ",TS[[tabno]]$Seas)
     q1 <- mutate(q0,val=100*.data[[MYtitl]]/(GDP*100))
@@ -126,15 +151,15 @@ Make_chrt <- function(tabno,type,qtr1,qtr2,MYtitl,altTitl,interv) {
       c1 <- c1+ geom_hline(yintercept=0,size=0.4,colour="black",
         linetype="dashed")
     }
-  } else if (type==6) {
-    MYsubtitl=paste0("Including trend line\n",Fqtr," to ",
-      Lqtr,", ",TS[[tabno]]$Seas)
-    q1 <- mutate(q0,val=.data[[MYtitl]])
+  } else if (type==7) {
+    MYsubtitl=paste0("Five-quarter centred moving average (dashed blue line)\n",
+      Fqtr," to ",Lqtr,", ",TS[[tabno]]$Seas)
+    q1 <- mutate(q0,val=MA5(.data[[MYtitl]]))
     q1 <- filter(q1,REF_DATE>=qtr1 & REF_DATE<=qtr2)
     c1 <- ggplot(q1,
       aes(x=REF_DATE,y=val))+
-      geom_line(colour="black",size=1.5)+
-      geom_smooth(method="lm",se=FALSE,linetype="dashed")+
+      geom_line(colour="blue",size=1.5,linetype="dashed")+
+      geom_line(aes(x=REF_DATE,y=.data[[MYtitl]]),colour="black",size=1.5)+ 
       scale_y_continuous(labels=scales::"comma")+
       labs(title=ChrtTitl,subtitle=paste0(MYsubtitl),caption="",x="",y="")
     if(posNeg(q1$val)) {
