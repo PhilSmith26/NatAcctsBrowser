@@ -30,14 +30,14 @@ GDPHdf <- readRDS("rds/GDPHdf.rds") # GDPH is used in historical tables
 #===============================================================================
 Make_tablQ <- function(tabno,type,qtr1,qtr2) {
   if (TS[[tabno]]$TblType=="Current") {
-    if (TS[[tabno]]$RateFctr==0) {
-      GDP <- filter(GDPdf,REF_DATE>=TS[[tabno]]$Strt)$VALUE
+      if (TS[[tabno]]$RateFctr==0) {
+          GDP <- filter(GDPdf,REF_DATE>=TS[[tabno]]$Strt)$VALUE
+      } else {
+          GDP <- filter(GDPdf,REF_DATE>=TS[[tabno]]$Strt)$VALUE/TS[[tabno]]$RateFctr
+      }
     } else {
-      GDP <- filter(GDPdf,REF_DATE>=TS[[tabno]]$Strt)$VALUE/TS[[tabno]]$RateFctr
-    }
-  } else {
-    GDP <- filter(GDPHdf,REF_DATE>=TS[[tabno]]$Strt)$VALUE/TS[[tabno]]$RateFctr
-  }    
+      GDP <- filter(GDPHdf,REF_DATE>=TS[[tabno]]$Strt)$VALUE/TS[[tabno]]$RateFctr
+    }    
   q0 <- readRDS(paste0("rds/",TS[[tabno]]$STCno,".rds"))
   colnam1 <- seq.Date(qtr1,qtr2,by="quarter")
   colnam2 <- vector()
@@ -137,23 +137,26 @@ Make_tablQ <- function(tabno,type,qtr1,qtr2) {
   rownames(tbl_df) <- NULL
   tbl_df <- select(tbl_df,Components,everything())
   tbl_df <- mutate(tbl_df,across(2:ncol(tbl_df),as.numeric))
+  for (i in 1:nrow(tbl_df)) {
+    tbl_df[i,1] <- paste0(i,". ",tbl_df[i,1])
+  }
   colnam <- colnames(tbl_df)
   colnamx <- colnam[2:length(colnam)]
   ncols <- length(colnamx)
-
+  
   gt_tbl <- gt(data=tbl_df)
   gt_tbl <- tab_options(gt_tbl,table.font.size=24,
-      #container.width = 1800,
       table.background.color=tcol,
       heading.background.color=tcol)
   gt_tbl <- tab_header(gt_tbl,
-      title=md(html(paste0("**",TS[[tabno]]$Titl,"**"))),
+      title=md(html(paste0("**","Table ",tordR[tabno],". ",
+        TS[[tabno]]$Titl,"**"))),
       subtitle=md(html(paste0(subtitle1,"<br><br>"))))
   gt_tbl <- tab_source_note(gt_tbl,
       source_note=md(html(TS[[tabno]]$Ftnt))) 
   gt_tbl <- cols_align(gt_tbl,
       align=c("left"),
-      columns=vars(`Components`))
+      columns=c(`Components`))
   gt_tbl <- cols_label(gt_tbl,
       Components="")
   gt_tbl <- tab_style(gt_tbl,
@@ -185,13 +188,20 @@ Make_tablQ <- function(tabno,type,qtr1,qtr2) {
       locations = cells_body(
         columns = 1,
         rows = indt5))
-  gt_tbl <- fmt_number(gt_tbl,
+  if (tabno==51 & (type==1 | type==6)) {
+    gt_tbl <- fmt_number(gt_tbl,
+      columns=c(2:(ncols+1)),
+      rows=c(1:22),
+      decimals=0,use_seps=TRUE)
+    gt_tbl <- fmt_number(gt_tbl,
+      columns=c(2:(ncols+1)),
+      rows=c(23:29),
+      decimals=2,use_seps=FALSE)
+  } else {
+    gt_tbl <- fmt_number(gt_tbl,
       columns=c(2:(ncols+1)),
       decimals=decs,
-      use_seps=TRUE)
-  #tbl <- gt_tbl
+      use_seps=TRUE)  
+  }
   tbl <- list(gt_tbl,tbl_df)
 }
-
-#z <- Make_tabl(12,1,as.Date("2019-10-01"),as.Date("2020-10-01"))
-#z

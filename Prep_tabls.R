@@ -1,10 +1,17 @@
 # Code to set up the table data frames and save them as rds files
-# May 7, 2021
+# May 14, 2021
+
+# Make sure the working directory is where the Table_specs.R file and
+# the Series_lists.R files are
+# Make sure the GDP_by_industry.R programs is run. It will create
+# "rds/36-10-0434-01.rds", "rds/36-10-0434-02.rds" and "rds/36-10-0434-03.rds"
+# Also change all the Endt values in Tabl_specs.R to the latest quarter
+
+# setwd("/Users/philipsmith/Documents/R/NatAcctsBrowserV16")
+savespot <- "/Users/philipsmith/Documents/R/NatAccts/Flexible-tables/"
 
 pkgs <- c("cansim","tidyverse","stringr","gt","rlist")
 inst <- lapply(pkgs,library,character.only=TRUE)
-
-savespot <- "/Users/philipsmith/Documents/R/NatAcctsBrowserV9/"
 
 GDPdf <- get_cansim_vector("v62295562","1961-01-01")
 GDPdf$REF_DATE <- as.Date(paste0(GDPdf$REF_DATE,"-01"))
@@ -358,22 +365,21 @@ saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
 #(20)===========================================================================
 table01_id <- "36-10-0126-01" # Property income of households
 table01 <- get_cansim(table01_id,refresh=file_refresh)
+q0 <- filter(table01,
+  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
+q0 <- select(q0,REF_DATE,Estimates,VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=Estimates,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+#(21)===========================================================================
+table01_id <- "36-10-0412-01" # International investment position
+table01 <- get_cansim(table01_id,refresh=file_refresh)
 q0 <- filter(table01,`Geographic region`=="All countries",
   Currency=="All currencies")
 q0 <- select(q0,REF_DATE,`Canada's international investment position`,VALUE)
 q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
 q0 <- pivot_wider(q0,names_from=`Canada's international investment position`,
   values_from=VALUE)
-saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
-
-#(21)===========================================================================
-table01_id <- "36-10-0412-01" # International investment position
-table01 <- get_cansim(table01_id,refresh=file_refresh)
-q0 <- filter(table01,
-  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
-q0 <- select(q0,REF_DATE,Estimates,VALUE)
-q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
-q0 <- pivot_wider(q0,names_from=Estimates,values_from=VALUE)
 saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
 
 #(22)===========================================================================
@@ -761,104 +767,14 @@ q0 <- select(q0,-`Quarterly stock to sales ratio, total economy`,
   -`Quarterly stock to sales ratio, wholesale trade`)
 saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
 
-#(42)===========================================================================
-table01_id <- "12-10-0122-01" # Exports
-table01 <- get_cansim(table01_id,refresh=file_refresh)
-q0 <- filter(table01,Trade=="Export",Basis=="Balance of payments",
-  `Seasonal adjustment`=="Seasonally adjusted")
-q0 <- select(q0,REF_DATE,
-  "NAPCS"="North American Product Classification System (NAPCS)",
-  "HIER"="Hierarchy for North American Product Classification System (NAPCS)",
-  VALUE)
-q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
-q0 <- mutate(q0,dots=str_count(q0$HIER,"\\."))
-q0 <- filter(q0,dots<=2)
-q0 <- select(q0,-HIER,-dots)
-q0 <- pivot_wider(q0,names_from=NAPCS,values_from=VALUE)
-saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
-
-#(43)===========================================================================
-table01_id <- "12-10-0122-01" # Imports
-table01 <- get_cansim(table01_id,refresh=file_refresh)
-table01_id <- "12-10-0122-02"
-q0 <- filter(table01,Trade=="Import",Basis=="Balance of payments",
-  `Seasonal adjustment`=="Seasonally adjusted")
-q0 <- select(q0,REF_DATE,
-  "NAPCS"="North American Product Classification System (NAPCS)",
-  "HIER"="Hierarchy for North American Product Classification System (NAPCS)",
-  VALUE)
-q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
-q0 <- mutate(q0,dots=str_count(q0$HIER,"\\."))
-q0 <- filter(q0,dots<=2)
-q0 <- select(q0,-HIER,-dots)
-q0 <- pivot_wider(q0,names_from=NAPCS,values_from=VALUE)
-saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
-
-#(44)===========================================================================
-table01_id <- "12-10-0124-01" # Exports chained
-table01 <- get_cansim(table01_id,refresh=file_refresh)
-q0 <- filter(table01,Trade=="Export")
-q0 <- select(q0,REF_DATE,
-  "NAPCS"="North American Product Classification System (NAPCS)",
-  "HIER"="Hierarchy for North American Product Classification System (NAPCS)",
-  VALUE)
-q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
-q0 <- mutate(q0,dots=str_count(q0$HIER,"\\."))
-q0 <- filter(q0,dots<=2)
-q0 <- select(q0,-HIER,-dots)
-q0 <- pivot_wider(q0,names_from=NAPCS,values_from=VALUE)
-saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
-
-#(45)===========================================================================
-table01_id <- "12-10-0124-01" # Imports chained
-table01 <- get_cansim(table01_id,refresh=file_refresh)
-table01_id <- "12-10-0124-02" # Imports chained
-q0 <- filter(table01,Trade=="Import")
-q0 <- select(q0,REF_DATE,
-  "NAPCS"="North American Product Classification System (NAPCS)",
-  "HIER"="Hierarchy for North American Product Classification System (NAPCS)",
-  VALUE)
-q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
-q0 <- mutate(q0,dots=str_count(q0$HIER,"\\."))
-q0 <- filter(q0,dots<=2)
-q0 <- select(q0,-HIER,-dots)
-q0 <- pivot_wider(q0,names_from=NAPCS,values_from=VALUE)
-saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
-
-#(46)===========================================================================
-table01_id <- "36-10-0136-01" # Income-based GDP 47-97 archived
-table01 <- get_cansim(table01_id,refresh=file_refresh)
-q0 <- filter(table01,
-  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
-q0 <- select(q0,REF_DATE,`Income-based estimates`,VALUE)
-q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
-q0 <- pivot_wider(q0,names_from=`Income-based estimates`,values_from=VALUE)
-saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
-
-#(47)===========================================================================
-table01_id <- "36-10-0137-01" # Expenditure-based GDP 47-97 archived
-table01 <- get_cansim(table01_id,refresh=file_refresh)
-q0 <- filter(table01,Prices=="Current prices",
-  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
-q0 <- select(q0,REF_DATE,`Expenditure-based estimates`,VALUE)
-q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
-q0 <- pivot_wider(q0,names_from=`Expenditure-based estimates`,values_from=VALUE)
-saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
-
-#(48)===========================================================================
-table01_id <- "36-10-0137-01" # Expenditure-based GDP 47-97 archived $86
-table01 <- get_cansim(table01_id,refresh=file_refresh)
-table01_id <- "36-10-0137-02" # Expenditure-based GDP 47-97 archived $86
-q0 <- filter(table01,Prices=="1986 constant prices",
-  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
-q0 <- select(q0,REF_DATE,`Expenditure-based estimates`,VALUE)
-q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
-q0 <- pivot_wider(q0,names_from=`Expenditure-based estimates`,values_from=VALUE)
-saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
-
 #(49)===========================================================================
+# DON'T FORGET:
+# Must change 124 (2021 Q1) to 125 (2021 Q2) next time
 table01_id <- "36-10-0580-01" # NBSA
-table01 <- get_cansim(table01_id,refresh=file_refresh)
+table01 <- get_cansim(table01_id,refresh=file_refresh) #,factors=FALSE)
+# Or use this from Jens: remotes::install_github("mountainmath/cansim@v0.3.9")
+# Trouble with this is it gives very long (but unique) names to variables
+# Should restart R and re-library cansim for this too.
 q0 <- filter(table01,Sectors=="Total all sectors",Valuation=="Market value")
 q0 <- select(q0,REF_DATE,Categories,VALUE)
 q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
@@ -969,7 +885,7 @@ RevCategories <- c(
   "Net worth",                                                
   "Net worth: current value",                                  
   "Net worth: equity")
-for (i in 0:123) {
+for (i in 0:124) { # Must change 124 (2021 Q1) to 125 (2021 Q2) next time
   for (j in 1:106) {
     q0[106*i+j,2] <- RevCategories[j]
   }
@@ -978,8 +894,13 @@ q0 <- pivot_wider(q0,names_from=Categories,values_from=VALUE)
 saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
 
 #(50)===========================================================================
+# DON'T FORGET:
+# Must change 124 (2021 Q1) to 125 (2021 Q2) next time
 table01_id <- "36-10-0578-01" # FFA
-table01 <- get_cansim(table01_id,refresh=file_refresh)
+# Or use this from Jens: remotes::install_github("mountainmath/cansim@v0.3.9")
+# Trouble with this is it gives very long (but unique) names to variables
+# Should restart R and re-library cansim for this too.
+table01 <- get_cansim(table01_id,refresh=file_refresh,factors=FALSE)
 q0 <- filter(table01,Sectors=="Total all sectors")
 q0 <- select(q0,REF_DATE,Categories,VALUE)
 q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
@@ -1083,12 +1004,301 @@ RevCategories <- c(
   "Other payables (L)",                                            
   "Discrepancy") 
 
-for (i in 0:123) {
+for (i in 0:124) { # Must change 124 (2021 Q1) to 125 (2021 Q2) next time
   for (j in 1:98) {
     q0[98*i+j,2] <- RevCategories[j]
   }
 }
 q0 <- pivot_wider(q0,names_from=Categories,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(42)===========================================================================
+table01_id <- "12-10-0122-01" # Exports
+table01 <- get_cansim(table01_id,refresh=file_refresh)
+q0 <- filter(table01,Trade=="Export",Basis=="Balance of payments",
+  `Seasonal adjustment`=="Seasonally adjusted")
+q0 <- select(q0,REF_DATE,
+  "NAPCS"="North American Product Classification System (NAPCS)",
+  "HIER"="Hierarchy for North American Product Classification System (NAPCS)",
+  VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- mutate(q0,dots=str_count(q0$HIER,"\\."))
+q0 <- filter(q0,dots<=2)
+q0 <- select(q0,-HIER,-dots)
+q0 <- pivot_wider(q0,names_from=NAPCS,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(43)===========================================================================
+table01_id <- "12-10-0122-01" # Imports
+table01 <- get_cansim(table01_id,refresh=file_refresh)
+table01_id <- "12-10-0122-02"
+q0 <- filter(table01,Trade=="Import",Basis=="Balance of payments",
+  `Seasonal adjustment`=="Seasonally adjusted")
+q0 <- select(q0,REF_DATE,
+  "NAPCS"="North American Product Classification System (NAPCS)",
+  "HIER"="Hierarchy for North American Product Classification System (NAPCS)",
+  VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- mutate(q0,dots=str_count(q0$HIER,"\\."))
+q0 <- filter(q0,dots<=2)
+q0 <- select(q0,-HIER,-dots)
+q0 <- pivot_wider(q0,names_from=NAPCS,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(44)===========================================================================
+table01_id <- "12-10-0124-01" # Exports chained
+table01 <- get_cansim(table01_id,refresh=file_refresh)
+q0 <- filter(table01,Trade=="Export")
+q0 <- select(q0,REF_DATE,
+  "NAPCS"="North American Product Classification System (NAPCS)",
+  "HIER"="Hierarchy for North American Product Classification System (NAPCS)",
+  VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- mutate(q0,dots=str_count(q0$HIER,"\\."))
+q0 <- filter(q0,dots<=2)
+q0 <- select(q0,-HIER,-dots)
+q0 <- pivot_wider(q0,names_from=NAPCS,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(45)===========================================================================
+table01_id <- "12-10-0124-01" # Imports chained
+table01 <- get_cansim(table01_id,refresh=file_refresh)
+table01_id <- "12-10-0124-02" # Imports chained
+q0 <- filter(table01,Trade=="Import")
+q0 <- select(q0,REF_DATE,
+  "NAPCS"="North American Product Classification System (NAPCS)",
+  "HIER"="Hierarchy for North American Product Classification System (NAPCS)",
+  VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- mutate(q0,dots=str_count(q0$HIER,"\\."))
+q0 <- filter(q0,dots<=2)
+q0 <- select(q0,-HIER,-dots)
+q0 <- pivot_wider(q0,names_from=NAPCS,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(46)===========================================================================
+table01_id <- "36-10-0136-01" # Income-based GDP 47-97 archived
+table01 <- get_cansim(table01_id,refresh=file_refresh)
+q0 <- filter(table01,
+  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
+q0 <- select(q0,REF_DATE,`Income-based estimates`,VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=`Income-based estimates`,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(47)===========================================================================
+table01_id <- "36-10-0137-01" # Expenditure-based GDP 47-97 archived
+table01 <- get_cansim(table01_id,refresh=file_refresh)
+q0 <- filter(table01,Prices=="Current prices",
+  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
+q0 <- select(q0,REF_DATE,`Expenditure-based estimates`,VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=`Expenditure-based estimates`,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(48)===========================================================================
+table01_id <- "36-10-0137-01" # Expenditure-based GDP 47-97 archived $86
+table01 <- get_cansim(table01_id,refresh=file_refresh)
+table01_id <- "36-10-0137-02" # Expenditure-based GDP 47-97 archived $86
+q0 <- filter(table01,Prices=="1986 constant prices",
+  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
+q0 <- select(q0,REF_DATE,`Expenditure-based estimates`,VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=`Expenditure-based estimates`,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(49)===========================================================================
+table01_id <- "11-10-0065-01" # Debt service indicators of households
+table01 <- get_cansim(table01_id,refresh=file_refresh)
+q0 <- filter(table01,
+  `Seasonal adjustment`=="Seasonally adjusted at annual rates")
+q0 <- select(q0,REF_DATE,Estimates,VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=Estimates,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(50)===========================================================================
+# NBSA - households
+# DON'T FORGET:
+# Must change 124 (2021 Q1) to 125 (2021 Q2) next time
+table01_id <- "36-10-0580-01" # NBSA
+table01 <- get_cansim(table01_id,refresh=file_refresh,factors=FALSE)
+table01_id <- "36-10-0580-02" # NBSA - households
+# Or use this from Jens: remotes::install_github("mountainmath/cansim@v0.3.9")
+# Trouble with this is it gives very long (but unique) names to variables
+# Should restart R and re-library cansim for this too.
+q0 <- filter(table01,
+  Sectors=="Households and non-profit institutions serving households",
+  Valuation=="Market value")
+q0 <- select(q0,REF_DATE,Categories,VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+RevCategories <- c(
+  "Total assets",                                              
+  "Non-financial assets",                                     
+  "Produced non-financial assets",                             
+  "Residential structures",                                   
+  "Non-residential structures",                                
+  "Machinery and equipment",                                  
+  "Intellectual property products",                            
+  "Consumer durables",                                        
+  "Inventories",                                               
+  "Weapons systems",                                          
+  "Non-produced non-financial assets",                         
+  "Land",                                                     
+  "Natural resources",                                         
+  "Other non-produced non-financial assets",                  
+  "Net financial assets",                                      
+  "Total financial assets",
+  "Official international reserves (A)",
+  "Gold (A)",                                                     
+  "Foreign currency deposits and securities (A)",                  
+  "Of which: deposits (A)",                                       
+  "Of which: securities (A)",                                      
+  "Reserve position in the International Monetary Fund (IMF) (A)",
+  "Special drawing rights (A)",                                    
+  "Total currency and deposits (A)",                              
+  "Canadian currency and deposits (A)",                            
+  "Foreign currency and deposits (A)",                            
+  "Debt securities (A)",                                           
+  "Canadian short-term paper (A)",                                
+  "Government of Canada short-term paper (A)",                     
+  "Other short-term paper (A)",                                   
+  "Foreign investments: short-term paper (A)",                     
+  "Canadian bonds and debentures (A)",                            
+  "Of which: savings bonds (A)",                                   
+  "Government of Canada bonds (A)",                               
+  "Provincial and territorial government bonds (A)",               
+  "Local government bonds (A)",                                   
+  "Other Canadian bonds and debentures (A)",                       
+  "Foreign investments: bonds (A)",                               
+  "Loans (A)",                                                     
+  "Consumer credit (A)",                                          
+  "Non-mortgage loans (A)",                                        
+  "Mortgages (A)",                                                
+  "Residential mortgages (A)",                                     
+  "Non-residential mortgages (A)",                                
+  "Corporate claims: loans and advances (A)",                      
+  "Government claims:  loans and advances (A)",                   
+  "Equity and investment fund shares (A)",                         
+  "Listed shares (A)",                                            
+  "Unlisted shares (A)",                                           
+  "Of which: corporate claims: equity",                       
+  "Mutual fund shares (units) (A)",                                
+  "Government claims: equity (A)",                                
+  "Foreign investments: equity (A)",                               
+  "Life insurance and pensions (A)",                              
+  "Of which: claims of pension funds on pension managers (A)",     
+  "Other accounts receivable (A)",                                
+  "Trade receivables (A)",                                         
+  "Other receivables (A)",                                        
+  "Of which: financial derivatives (A)",                           
+  "Liabilities and net worth",                                
+  "Total financial liabilities",                               
+  "Official international reserves (L)",                          
+  "Gold (L)",                                                      
+  "Foreign currency deposits and securities (L)",                 
+  "Of which: deposits (L)",                                        
+  "Of which: securities (L)",                                     
+  "Reserve position in the International Monetary Fund (IMF) (L)", 
+  "Special drawing rights (L)",                                   
+  "Total currency and deposits (L)",                               
+  "Canadian currency and deposits (L)",                           
+  "Foreign currency and deposits (L)",                             
+  "Debt securities (L)",                                          
+  "Canadian short-term paper (L)",                                 
+  "Government of Canada short-term paper (L)",                    
+  "Other short-term paper (L)",                                    
+  "Foreign investments: short-term paper (L)",                    
+  "Canadian bonds and debentures (L)",                             
+  "Of which: savings bonds (L)",                                  
+  "Government of Canada bonds (L)",                                
+  "Provincial and territorial government bonds (L)",              
+  "Local government bonds (L)",                                    
+  "Other Canadian bonds and debentures (L)",                      
+  "Foreign investments: bonds (L)",                                
+  "Loans (L)",                                                    
+  "Consumer credit (L)",                                           
+  "Non-mortgage loans (L)",                                       
+  "Mortgages (L)",                                                 
+  "Residential mortgages (L)",                                    
+  "Non-residential mortgages (L)",                                
+  "Corporate claims: loans and advances (L)",                     
+  "Government claims: loans and advances (L)",                     
+  "Equity and investment fund shares (L)",                        
+  "Listed shares (L)",                                             
+  "Unlisted shares (L)",                                          
+  "Mutual fund shares (units) (L)",                                
+  "Government claims: equity (L)",                                
+  "Foreign investments: equity (L)",                               
+  "Life insurance and pensions (L)",                              
+  "Of which: claims of pension funds on pension managers (L)",     
+  "Other accounts payable",                                   
+  "Trade payables",                                            
+  "Other payables",                                           
+  "Of which: financial derivatives (L)",                           
+  "Net worth",                                                
+  "Net worth: current value",                                  
+  "Net worth: equity")
+for (i in 0:124) { # Must change 124 (2021 Q1) to 125 (2021 Q2) next time
+  for (j in 1:106) {
+    q0[106*i+j,2] <- RevCategories[j]
+  }
+}
+q0 <- pivot_wider(q0,names_from=Categories,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(51)===========================================================================
+table01_id <- "10-10-0015-01" # GFS - Stmt of govt ops and balance sheet
+table01 <- get_cansim(table01_id,refresh=TRUE)
+q0 <- filter(table01,
+  `Government sectors`=="Consolidated government")
+q0 <- select(q0,REF_DATE,"Estimates"="Statement of government operations and balance sheet",VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=Estimates,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(52)===========================================================================
+table01_id <- "10-10-0015-01" # GFS - Stmt of govt ops and balance sheet
+table01 <- get_cansim(table01_id,refresh=TRUE)
+table01_id <- "10-10-0015-02" # GFS - Stmt of govt ops and balance sheet
+q0 <- filter(table01,
+  `Government sectors`=="Federal government")
+q0 <- select(q0,REF_DATE,"Estimates"="Statement of government operations and balance sheet",VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=Estimates,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(53)===========================================================================
+table01_id <- "10-10-0015-01" # GFS - Stmt of govt ops and balance sheet
+table01 <- get_cansim(table01_id,refresh=TRUE)
+table01_id <- "10-10-0015-03" # GFS - Stmt of govt ops and balance sheet
+q0 <- filter(table01,
+  `Government sectors`=="Provincial and territorial government")
+q0 <- select(q0,REF_DATE,"Estimates"="Statement of government operations and balance sheet",VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=Estimates,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(54)===========================================================================
+table01_id <- "10-10-0015-01" # GFS - Stmt of govt ops and balance sheet
+table01 <- get_cansim(table01_id,refresh=TRUE)
+table01_id <- "10-10-0015-04" # GFS - Stmt of govt ops and balance sheet
+q0 <- filter(table01,
+  `Government sectors`=="Local government")
+q0 <- select(q0,REF_DATE,"Estimates"="Statement of government operations and balance sheet",VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=Estimates,values_from=VALUE)
+saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
+
+#(55)===========================================================================
+table01_id <- "10-10-0015-01" # GFS - Stmt of govt ops and balance sheet
+table01 <- get_cansim(table01_id,refresh=TRUE)
+table01_id <- "10-10-0015-05" # GFS - Stmt of govt ops and balance sheet
+q0 <- filter(table01,
+  `Government sectors`=="Canada Pension Plan (CPP) and Quebec Pension Plan (QPP)")
+q0 <- select(q0,REF_DATE,"Estimates"="Statement of government operations and balance sheet",VALUE)
+q0$REF_DATE <- as.Date(paste0(q0$REF_DATE,"-01"))
+q0 <- pivot_wider(q0,names_from=Estimates,values_from=VALUE)
 saveRDS(q0,paste0(savespot,"rds/",table01_id,".rds"))
 
 

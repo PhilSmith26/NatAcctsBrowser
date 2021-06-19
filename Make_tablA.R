@@ -85,6 +85,12 @@ Make_tablA <- function(tabno,type,year1,year2) {
   } else if (TS[[tabno]]$RateFctr==0) {
     q1 <- q1 %>% group_by(Year) %>% summarise(across(2:(ncol(q1)-2),
       function(x) {y <- x[4]}))
+  } else if (TS[[tabno]]$RateFctr==5) {
+    q1a <- q1 %>% group_by(Year) %>% summarise(across(2:41,sum))
+    q1b <- q1 %>% group_by(Year) %>% summarise(across(42:(ncol(q1)-2),
+      function(x) {y <- x[4]}))
+    q1b <- select(q1b,-Year)
+    q1 <- cbind(q1a,q1b)
   }
   yr1 <- q1$Year[1]
   yr2 <- q1$Year[nrow(q1)]
@@ -162,6 +168,9 @@ Make_tablA <- function(tabno,type,year1,year2) {
   rownames(tbl_df) <- NULL
   tbl_df <- select(tbl_df,Components,everything())
   tbl_df <- mutate(tbl_df,across(2:ncol(tbl_df),as.numeric))
+  for (i in 1:nrow(tbl_df)) {
+    tbl_df[i,1] <- paste0(i,". ",tbl_df[i,1])
+  }
   colnam <- colnames(tbl_df)
   colnamx <- colnam[2:length(colnam)]
   ncols <- length(colnamx)
@@ -172,13 +181,14 @@ Make_tablA <- function(tabno,type,year1,year2) {
       table.background.color=tcol,
       heading.background.color=tcol)
   gt_tbl <- tab_header(gt_tbl,
-      title=md(html(paste0("**",TS[[tabno]]$Titl,"**"))),
+      title=md(html(paste0("**","Table ",tordR[tabno],". ",TS[[tabno]]$Titl,"**"))),
+      #title=md(html(paste0("**",TS[[tabno]]$Titl,"**"))),
       subtitle=md(html(paste0(subtitle1,"<br><br>"))))
   gt_tbl <- tab_source_note(gt_tbl,
       source_note=md(html(TS[[tabno]]$Ftnt))) 
   gt_tbl <- cols_align(gt_tbl,
       align=c("left"),
-      columns=vars(`Components`))
+      columns=c(`Components`))
   gt_tbl <- cols_label(gt_tbl,
       Components="")
   gt_tbl <- tab_style(gt_tbl,
@@ -210,10 +220,20 @@ Make_tablA <- function(tabno,type,year1,year2) {
       locations = cells_body(
         columns = 1,
         rows = indt5))
-  gt_tbl <- fmt_number(gt_tbl,
+  if (tabno==51 & (type==1 | type==5)) {
+    gt_tbl <- fmt_number(gt_tbl,
+      columns=c(2:(ncols+1)),
+      rows=c(1:22),
+      decimals=0,use_seps=TRUE)
+    gt_tbl <- fmt_number(gt_tbl,
+      columns=c(2:(ncols+1)),
+      rows=c(23:29),
+      decimals=2,use_seps=FALSE)
+  } else {
+    gt_tbl <- fmt_number(gt_tbl,
       columns=c(2:(ncols+1)),
       decimals=decs,
-      use_seps=TRUE)
-  #tbl <- gt_tbl
+      use_seps=TRUE)  
+  }
   tbl <- list(gt_tbl,tbl_df)
 }

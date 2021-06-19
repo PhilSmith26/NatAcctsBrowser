@@ -1,5 +1,5 @@
-# National accounts charts for shiny dashboard
-# May 6, 2021
+# National accounts quarterly charts
+# May 17, 2021
 
 pkgs <- c("tidyverse","scales","tibble","stringr","rlang","lubridate")
 inst <- lapply(pkgs,library,character.only=TRUE)
@@ -171,8 +171,7 @@ Make_chrtQ <- function(tabno,type,qtr1,qtr2,MYtitl,altTitl,interv) {
       aes(x=REF_DATE,y=val))+
       geom_line(colour="blue",size=1.5,linetype="dashed")+
       geom_line(aes(x=REF_DATE,y=.data[[MYtitl]]),colour="black",size=1.5)+ 
-      scale_y_continuous(labels=scales::"comma")+
-      #labs(title=ChrtTitl,subtitle=paste0(MYsubtitl),caption="",x="",y="")
+      scale_y_continuous(labels=scales::"comma")
     if(posNeg(q1$val)) {
       c1 <- c1+ geom_hline(yintercept=0,size=0.4,colour="black",
         linetype="dashed")

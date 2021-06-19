@@ -23,20 +23,22 @@ strtrangT <- c(qtrsSrt[length(qtrsSrt)-5],qtrsSrt[length(qtrsSrt)])
 
 qtUI <- function(id) {
   tabPanel(tags$b(tags$span(style="color:blue", HTML("Quarterly<br>tables"))),
-    tags$style(type='text/css', ".selectize-input { 
-      font-size: 24px; line-height: 24px;} .selectize-dropdown 
-      { font-size: 20px; line-height: 20px; }"),
-    selectInput(NS(id,"tabl1"), tags$b(tags$span(style="color:blue", 
-      "Choose a table:")),choices = tn,selectize=FALSE,width = "100%"),
+    tags$style(HTML(".selectize-input, .option {
+      color:black; 
+      font-size:26px;
+      font-family:Optima
+    }")),    
+    selectInput(NS(id,"tabl1"), tags$b(tags$span(style="color:blue;font-size:20px", 
+      "Choose a table:")),choices = tn,width = "100%"),
     fluidRow(
-      column(10,prettyRadioButtons(NS(id,"transf1"), tags$b(tags$span(style="color:blue", 
+      column(10,prettyRadioButtons(NS(id,"transf1"), tags$b(tags$span(style="color:blue;font-size:20px", 
         "Choose a transformation:")),choices=trf1,bigger=TRUE,
         outline=TRUE,inline=TRUE,shape="round",animation="pulse")),
       column(2,downloadButton(NS(id,"downloadData1"),label="Download table"))
     ),
     chooseSliderSkin(skin="Round",color="blue"),
-    sliderTextInput(NS(id,"Dates"),label= #tags$b(tags$span(style="color:blue", 
-      "Choose starting and ending dates:",#)),
+    sliderTextInput(NS(id,"Dates"),tags$b(tags$span(style="color:blue;font-size:20px", 
+      "Choose starting and ending dates:")),
       choices=qtrsSrt,
       selected=strtrangT,
       dragRange = TRUE,

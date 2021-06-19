@@ -15,13 +15,19 @@ tac <-  c( # transformation options for an annual chart
 strtrangCA <- c("2015","2020")
 
 acUI <- function(id) {
-  tabPanel(tags$b(tags$span(style="color:blue", HTML("Annual<br>charts"))),
-    selectInput(NS(id,"tabl"), tags$b(tags$span(style="color:blue", 
+  tabPanel(theme=shinytheme("journal"),
+    tags$b(tags$span(style="color:blue", HTML("Annual<br>charts"))),
+    tags$style(HTML(".selectize-input, .option {
+      color:black; 
+      font-size:26px;
+      font-family:Optima
+    }")),    
+    selectInput(NS(id,"tabl"), tags$b(tags$span(style="color:blue;font-size:20px", 
       "Choose a table:")),choices = tn,width = "100%"),
-    selectInput(NS(id,"chrtA"), tags$b(tags$span(style="color:blue", 
-      "Choose a time series to chart:")),choices = ser_01,selectize=FALSE,width = "100%"),
+    selectInput(NS(id,"chrtA"), tags$b(tags$span(style="color:blue;font-size:20px", 
+      "Choose a time series to chart:")),choices = ser_01,width = "100%"),
     fluidRow(
-      column(6,prettyRadioButtons(NS(id,"transfm"), tags$b(tags$span(style="color:blue", 
+      column(6,prettyRadioButtons(NS(id,"transfm"), tags$b(tags$span(style="color:blue;font-size:20px", 
         "Choose a transformation:")),choices=tac,bigger=TRUE,
         outline=TRUE,inline=TRUE,shape="round",animation="pulse")),
       column(4,textInput(NS(id,"altTitl"),label="Choose your own chart title (optional):",
@@ -29,8 +35,8 @@ acUI <- function(id) {
       column(2,downloadButton(NS(id,"downloadAchart"),label="Download chart"))
     ),
     chooseSliderSkin(skin="Round",color="blue"),
-    sliderTextInput(NS(id,"ChrtDates"),label= #tags$b(tags$span(style="color:blue", 
-      "Choose starting and ending dates:",#)),
+    sliderTextInput(NS(id,"ChrtDates"),label= 
+      "Choose starting and ending dates:",
       choices=annsSrt,
       selected=strtrangCA,
       dragRange = TRUE,

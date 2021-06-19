@@ -15,12 +15,17 @@ trf2 <-  c( # transformation options for a quarterly chart
 
 qcUI <- function(id) {
   tabPanel(tags$b(tags$span(style="color:blue", HTML("Quarterly<br>charts"))),
-    selectInput(NS(id,"tabl2"), tags$b(tags$span(style="color:blue", 
+    tags$style(HTML(".selectize-input, .option {
+      color:black; 
+      font-size:26px;
+      font-family:Optima
+    }")),    
+    selectInput(NS(id,"tabl2"), tags$b(tags$span(style="color:blue;font-size:20px", 
       "Choose a table:")),choices = tn,width = "100%"),
-    selectInput(NS(id,"chrt"), tags$b(tags$span(style="color:blue", 
-      "Choose a time series to chart:")),choices = ser_01,selectize=FALSE,width = "100%"),
+    selectInput(NS(id,"chrt"), tags$b(tags$span(style="color:blue;font-size:20px", 
+      "Choose a time series to chart:")),choices = ser_01,width = "100%"),
     fluidRow(
-      column(6,prettyRadioButtons(NS(id,"transf2"), tags$b(tags$span(style="color:blue", 
+      column(6,prettyRadioButtons(NS(id,"transf2"), tags$b(tags$span(style="color:blue;font-size:20px", 
         "Choose a transformation:")),choices=trf2,bigger=TRUE,
         outline=TRUE,inline=TRUE,shape="round",animation="pulse")),
       column(4,textInput(NS(id,"altTitl"),label="Choose your own chart title (optional):",
@@ -79,7 +84,7 @@ qcServer <- function(id) {
     })
     altTitle <- reactive({input$altTitl})
     chartP <- reactive({if (!(TS[[tab2()]]$Idx & type2()==6))
-        Make_chrtQ(tab2(),type2(),qtr1c(),qtr2c(),MYtitl(),altTitle(),"year")})   
+        Make_chrtQ(tab2(),type2(),qtr1c(),qtr2c(),MYtitl(),altTitle(),"")})   
     output$chart <- renderPlot({chartP()},height=700)
     output$downloadData2 <- downloadHandler(
       filename=function() {

@@ -12,26 +12,33 @@ trf1A <- c( # transformation options for an annual table
 )
 annsSrt <- as.character(c(TS[[1]]$StrtA:TS[[1]]$EndtA))
 # Now the starting range for a table - the last six years
-annsrangT <- c("2015","2020")
+annsrang <- c("2015","2020") # "current" tables on start-up
 
 atUI <- function(id) {
-  tabPanel(tags$b(tags$span(style="color:blue", HTML("Annual<br> tables"))),
+  tabPanel(theme=shinytheme("journal"),
+    tags$b(tags$span(style="color:blue;font-family:helvetica", 
+      HTML("Annual<br> tables"))),
     tags$style(type='text/css', ".selectize-input { 
-      font-size: 24px; line-height: 24px;} .selectize-dropdown 
+      font-size: 24px; line-height: 24px;font-family:helvetica;} .selectize-dropdown 
       { font-size: 20px; line-height: 20px; }"),
-    selectInput(NS(id,"tabl1A"), tags$b(tags$span(style="color:blue", 
-      "Choose a table:")),choices = tn,selectize=FALSE,width = "100%"),
+    tags$style(HTML(".selectize-input, .option {
+      color:black; 
+      font-size:26px;
+      font-family:Optima
+    }")),    
+    selectInput(NS(id,"tabl1A"), tags$b(tags$span(style="color:blue;font-size:20px", 
+      "Choose a table:")),choices = tn,width = "100%"),
     fluidRow(
-      column(10,prettyRadioButtons(NS(id,"transf1A"), tags$b(tags$span(style="color:blue", 
-        "Choose a transformation:")),choices=trf1A,bigger=TRUE,
-        outline=TRUE,inline=TRUE,shape="round",animation="pulse")),
+      column(10,prettyRadioButtons(NS(id,"transf1A"), tags$b(tags$span(style="color:blue;;font-size:20px", 
+        "Choose a transformation:")),choices=trf1A,
+        outline=TRUE,bigger=TRUE,inline=TRUE,shape="round",animation="pulse")),
       column(2,downloadButton(NS(id,"downloadData1A"),label="Download table"))
     ),
     chooseSliderSkin(skin="Round",color="blue"),
-    sliderTextInput(NS(id,"DatesA"),label= #tags$b(tags$span(style="color:blue", 
-      "Choose starting and ending years:",#)),
+    sliderTextInput(NS(id,"DatesA"),label=
+      "Choose starting and ending years:",
       choices=annsSrt,
-      selected=annsrangT,
+      selected=annsrang,
       dragRange = TRUE,
       width="100%"),
     htmlOutput(NS(id,"notablA")),
@@ -81,15 +88,18 @@ atServer <- function(id) {
     observe({ # annual table update
       annsRange <- as.character(c(TS[[tab1A()]]$StrtA:TS[[tab1A()]]$EndtA))
       picksA <- annsRange
-      annsrang1 <- c("2015","2020")
+      annsRange <- as.character(c(TS[[tab1A()]]$StrtA:TS[[tab1A()]]$EndtA))
+      picks <- annsRange
+      n <- length(annsRange)
+      annsRang1 <- c(annsRange[n-5],annsRange[n])
+      #annsrang1 <- c("2014","2020")
       updateSliderTextInput(session,inputId="DatesA",tags$b(tags$span(style="color:blue", 
         label="Choose starting and ending dates:")),
         choices = picksA,
-        selected=annsrang1)
+        selected=annsRang1)
     })
-    observeEvent(input$DatesA, {
-      message(paste0("input$DatesA[1] is ",input$DatesA[1]))
-      message(paste0("input$DatesA[2] is ",input$DatesA[2]))
-    })
+    #observeEvent(input$tabl1A, {
+    #  message(paste0("input$tabl1A is ",input$tabl1A))
+    #})
   })
 }
